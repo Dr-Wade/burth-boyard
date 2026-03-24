@@ -1,8 +1,18 @@
 {
   "functions": {
-    "source": "functions"
+    "source": "functions",
+    "region": "europe-west1"
   },
   "firestore": {
     "rules": "firestore.rules"
+  },
+  "hosting": {
+    "public": "dist",
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
   }
 }

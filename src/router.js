@@ -8,7 +8,9 @@ import TeamDashboard from './views/TeamDashboard.vue'
 import ChallengeDetail from './views/ChallengeDetail.vue'
 import AdminPanel from './views/AdminPanel.vue'
 import AdminTeamDetail from './views/AdminTeamDetail.vue'
+import AdminUsers from './views/AdminUsers.vue'
 import Home from './views/Home.vue'
+import FinalPhase from './views/FinalPhase.vue'
 
 const routes = [
   { path: '/login', name: 'Login', component: Login },
@@ -17,6 +19,8 @@ const routes = [
   { path: '/team/:teamId/challenge/:challengeId', name: 'ChallengeDetail', component: ChallengeDetail, props: true, meta: { requiresAuth: true } },
   { path: '/admin', name: 'AdminPanel', component: AdminPanel, meta: { requiresAuth: true, requiresAdmin: true } },
   { path: '/admin/team/:teamId', name: 'AdminTeamDetail', component: AdminTeamDetail, props: true, meta: { requiresAuth: true, requiresAdmin: true } },
+  { path: '/admin/users', name: 'AdminUsers', component: AdminUsers, meta: { requiresAuth: true, requiresAdmin: true } },
+  { path: '/team/:teamId/final', name: 'FinalPhase', component: FinalPhase, props: true, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
@@ -29,6 +33,8 @@ router.beforeEach(async (to) => {
 
   const user = await getCurrentUser()
   if (!user) return { name: 'Login' }
+
+  console.log(user);
 
   if (to.meta.requiresAdmin) {
     const snap = await getDoc(doc(db, 'users', user.uid))

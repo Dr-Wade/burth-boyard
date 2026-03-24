@@ -19,24 +19,49 @@ service cloud.firestore {
       return isSignedIn() && userRole() == 'team-leader';
     }
 
+    function userTeamId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId;
+    }
+
+    match /{path=**}/challenges/{challengeId} {
+      allow read, write: if isAdmin();
+    }
+
     // Users collection: created on first login, readable by the user themselves and admins
     match /users/{uid} {
-      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
-      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow read: if isSignedIn() && (isAdmin() || request.auth.uid == uid);
+      allow create: if isSignedIn() && (isAdmin() || request.auth.uid == uid);
       allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Game state: readable by anyone signed in, writable only by admins / cloud functions
+    match /games/{gameId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     // Teams: readable by any authenticated user, writable by team-leaders and admins
     match /teams/{teamId} {
       allow read: if isSignedIn();
-      allow create: if isTeamLeader() || isAdmin();
-      allow update: if isTeamLeader() || isAdmin();
+      allow create: if isAdmin();
+      allow delete: if isAdmin();
+      allow update: if isAdmin()
+        || (
+          isTeamLeader()
+          && userTeamId() == teamId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName'])
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() > 0
+          && request.resource.data.displayName.size() <= 80
+        );
 
       // Challenge subcollection: same rules as parent team
       match /challenges/{challengeId} {
         allow read: if isSignedIn();
         allow create: if isTeamLeader() || isAdmin();
         allow update: if isTeamLeader() || isAdmin();
+        allow delete: if isAdmin();
       }
     }
   }

@@ -12,6 +12,14 @@ const existingTeams = ref([])
 const loading = ref(true)
 const creating = ref(false)
 
+function formatTeamName(team) {
+  const displayName = team?.displayName
+  const name = team?.name
+  if (!displayName && !name) return '—'
+  if (!displayName || !name) return displayName ?? name
+  return `${displayName} (${name})`
+}
+
 async function loadTeams() {
   loading.value = true
   const snap = await getDocs(collection(db, 'teams'))
@@ -25,6 +33,7 @@ async function createTeam() {
   if (!teamName.value.trim()) return
   creating.value = true
   try {
+    const rawName = teamName.value.trim()
     const challengeResults = {}
     for (const ch of CHALLENGES) {
       challengeResults[ch.id] = {
@@ -37,7 +46,8 @@ async function createTeam() {
       }
     }
     const docRef = await addDoc(collection(db, 'teams'), {
-      name: teamName.value.trim(),
+      name: rawName,
+      displayName: rawName,
       totalScore: 0,
       challengeResults,
       createdAt: new Date(),
@@ -105,7 +115,7 @@ function joinTeam(teamId) {
             @click="joinTeam(team.id)"
             class="w-full flex items-center justify-between bg-slate-700/40 hover:bg-slate-700/70 rounded-xl px-4 py-3 transition-colors group"
           >
-            <span class="font-medium">{{ team.name }}</span>
+            <span class="font-medium">{{ formatTeamName(team) }}</span>
             <ArrowRight class="w-4 h-4 text-slate-500 group-hover:text-amber-400 transition-colors" />
           </button>
         </div>
